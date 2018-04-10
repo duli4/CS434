@@ -3,7 +3,7 @@ import scipy as sp
 import math
 
 MU = 0.0000002
-MU = 0.01
+MU = 1.0
 
 def load_X_and_Y(filename,features,rows):
    f = open(filename,"r")
@@ -50,7 +50,12 @@ def main():
      for i in xrange(0,800):
         X_i = np.transpose(np.array([X_test[i]]))
         w_T_X_i = np.matmul(np.transpose(w),X_i)[0][0]
-        guess = 1 if w_T_X_i > 0.0 else 0
+	if w_T_X_i < -700: #avoid those overflows (e^709 overflows)
+	   P = 0
+	else:
+	   P = 1.0/(1.0+math.exp(-w_T_X_i))
+
+        guess = 1 if P > 0.5 else 0
         if guess == Y_test[i][0]:
 	   correct = correct + 1
         else:
@@ -58,6 +63,6 @@ def main():
      if (last_correct != correct):
         print "Iteration",count,":",correct, "Correct,", wrong, "Wrong"
      last_correct = correct
-
+   print "|nabla| =",nabla_norm
 
 if __name__ == "__main__": main()

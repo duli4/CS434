@@ -3,6 +3,7 @@ import scipy as sp
 import math
 
 MU = 0.0000002
+MU = 0.01
 
 def load_X_and_Y(filename,features,rows):
    f = open(filename,"r")
@@ -25,7 +26,10 @@ def calculate_w_BGD(X,Y,w,mu):
    for i in xrange(0,num_points):
       X_i = np.transpose(np.array([X[i]]))
       w_T_X_i = np.matmul(np.transpose(w),X_i)[0][0]
-      y_i_hat = 1.0/(1.0+math.exp(-w_T_X_i))
+      if w_T_X_i < -700:
+	 y_i_hat = 0.0
+      else:
+	 y_i_hat = 1.0/(1.0+math.exp(-w_T_X_i))
       nabla = nabla + (y_i_hat-Y[i][0])*X_i
    w = w - mu*nabla
    nabla_norm = np.linalg.norm(nabla)
@@ -38,7 +42,7 @@ def main():
    count = 0
    nabla_norm = calculate_w_BGD(X,Y,w,MU)
    last_correct = -1
-   while nabla_norm > 10:
+   while nabla_norm > 0.5:
      (w,nabla_norm) = calculate_w_BGD(X,Y,w,MU)
      count = count + 1
      correct = 0

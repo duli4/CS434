@@ -79,7 +79,7 @@ def main():
 
 
    #1.4: Modify the data by adding random features
-   test_vals = [2,4,6,8,10,20,50,100]
+   test_vals = [2,4,6,8,10,20,40,60,80,100]
    practice_results = []
    test_results = []
    for d in test_vals:

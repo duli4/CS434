@@ -1,5 +1,9 @@
 import numpy as np
 import scipy as sp
+import matplotlib as mpl
+#Generate to image file rather than display to screen
+mpl.use('Agg') 
+import matplotlib.pyplot as plt
 import math
 
 def load_X_and_Y(filename,features,rows,dummy,randoms=0):
@@ -76,9 +80,19 @@ def main():
 
    #1.4: Modify the data by adding random features
    test_vals = [2,4,6,8,10,20,50,100]
+   practice_results = []
+   test_results = []
    for d in test_vals:
       (ASE_d,ASE_test_d) = run_with_random(d)
+      practice_results.append(ASE_d)
+      test_results.append(ASE_test_d)
       print "d =", d, ":"
       print "Training ASE =", ASE_d
       print "Testing ASE =", ASE_test_d
+   plt.plot(test_vals, practice_results, label='Training ASE')
+   plt.plot(test_vals, test_results, label='Testing ASE')
+   plt.xlabel('Number of Random Features')
+   plt.ylabel('ASE Value')
+   plt.legend()
+   plt.savefig('random_feature_results')
 if __name__ == "__main__": main()

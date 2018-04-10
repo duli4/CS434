@@ -1,5 +1,6 @@
 import numpy as np
 import scipy as sp
+import math
 
 def load_X_and_Y(filename,features,rows,dummy,randoms=0):
    f = open(filename,"r")
@@ -33,7 +34,7 @@ def compute_ASE(w,X,Y):
       guess = 0
       for x in xrange(0,num_features):
 	 guess = guess + w[x][0]*X[i][x]
-      SE = (Y[i][0]-guess)**2
+      SE = math.pow((Y[i][0]-guess),2)
       SSE = SSE + SE
    ASE = SSE/num_points
    return ASE

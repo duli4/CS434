@@ -1,11 +1,11 @@
 import numpy as np
 import scipy as sp
 
-def load_X_and_Y(filename,features,rows,dummy):
+def load_X_and_Y(filename,features,rows,dummy,randoms=0):
    f = open(filename,"r")
    all_data = f.read().splitlines()
    f.close()
-   X = np.zeros( (rows,features + (1 if dummy else 0)) )
+   X = np.zeros( (rows,features + (1 if dummy else 0) + randoms) )
    Y = np.zeros( (rows,1) )
    for i in xrange(0,rows):
       data = all_data[i].split()
@@ -14,6 +14,8 @@ def load_X_and_Y(filename,features,rows,dummy):
       Y[i][0] = float(data[features])
       if dummy:
       	X[i][features] = 1 #dummy variable
+      for x in xrange(0,randoms):
+	X[i][features + (1 if dummy else 0) + x] = np.random.normal()
    return (X,Y)
 
 def calculate_w(X,Y):
@@ -36,6 +38,13 @@ def compute_ASE(w,X,Y):
    ASE = SSE/num_points
    return ASE
    
+def run_with_random(d):
+   (X,Y) = load_X_and_Y("../housing_train.txt",13,433,True,d)
+   (X_test,Y_test) = load_X_and_Y("../housing_test.txt",13,74,True,d)
+   w = calculate_w(X,Y)
+   ASE = compute_ASE(w,X,Y)
+   ASE_test = compute_ASE(w,X_test,Y_test)
+   return (ASE,ASE_test)
 
 def main():
    #1.1: Load X and Y, calculate w and report it
@@ -65,4 +74,10 @@ def main():
 
 
    #1.4: Modify the data by adding random features
+   test_vals = [2,4,6,8,10,20,50,100]
+   for d in test_vals:
+      (ASE_d,ASE_test_d) = run_with_random(d)
+      print "d =", d, ":"
+      print "Training ASE =", ASE_d
+      print "Testing ASE =", ASE_test_d
 if __name__ == "__main__": main()

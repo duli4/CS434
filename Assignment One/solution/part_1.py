@@ -25,8 +25,8 @@ def calculate_w(X,Y):
 def compute_ASE(w,X,Y):
    SSE = 0
    num_features = len(w)
-   num_points = len(X[0])
-   #assume the lenght of X and Y is the same
+   num_points = len(X)
+   #assume the length of X and Y is the same (it should be, or you could not have gotten w!)
    for i in xrange(0,num_points):
       guess = 0
       for x in xrange(0,num_features):
@@ -42,7 +42,7 @@ def main():
    (X,Y) = load_X_and_Y("../housing_train.txt",13,433,True)
    w = calculate_w(X,Y)
    print "w:"
-   print w
+   print np.transpose(w)
 
    #1.2: Apply learned weight vector to training data and testing data, respectively, and compute and report their ASEs
    ASE = compute_ASE(w,X,Y)
@@ -50,7 +50,19 @@ def main():
    (X_test,Y_test) = load_X_and_Y("../housing_test.txt",13,74,True)
    ASE_test = compute_ASE(w,X_test,Y_test)
    print "ASE for testing data:", ASE_test
+
    #1.3: Remove the dummy variable from X, repeat 1 and 2
+   (X_dumb,Y_dumb) = load_X_and_Y("../housing_train.txt",13,433,False)
+   w_dumb = calculate_w(X_dumb,Y_dumb)
+   print "w without dummy variable: "
+   print np.transpose(w_dumb)
+   ASE_ = compute_ASE(w_dumb,X_dumb,Y_dumb)
+   print "ASE for training data without dummy variable:", ASE_
+   (X_dumb_test,Y_dumb_test) = load_X_and_Y("../housing_test.txt",13,74,False)
+   ASE_test_ = compute_ASE(w_dumb,X_dumb_test,Y_dumb_test)
+   print "ASE for testing data without dummy variable:", ASE_test_
+
+
 
    #1.4: Modify the data by adding random features
 if __name__ == "__main__": main()

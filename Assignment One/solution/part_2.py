@@ -1,10 +1,13 @@
 import numpy as np
 import scipy as sp
+import matplotlib as mpl
+#Generate to image file rather than display to screen
+mpl.use('Agg') 
+import matplotlib.pyplot as plt
 import math
 
-MU = 0.0000002
-MU = 0.1
-MyLambda = 0.1
+MU = 0.01
+MyLambda = 0.0
 
 def load_X_and_Y(filename,features,rows):
    f = open(filename,"r")
@@ -40,6 +43,9 @@ def calculate_w_BGD(X,Y,w,mu,Lambda):
    return (w,nabla_norm)
 
 def main():
+   training_accuracies = []
+   test_accuracies = []
+   counts = []
    (X,Y) = load_X_and_Y("../usps-4-9-train.csv",256,1400)
    (X_test,Y_test) = load_X_and_Y("../usps-4-9-test.csv",256,800)
    w = np.zeros( (257, 1) )
@@ -76,7 +82,18 @@ def main():
 	   correct = correct + 1
      test_accuracy = correct*100.0/800.0
      print "Iteration",count,":",training_accuracy,"% Training,",test_accuracy,"% Testing"
+     training_accuracies.append(training_accuracy)
+     test_accuracies.append(test_accuracy)
+     counts.append(count)
+     
+     
      last_correct = correct
    print "|nabla| =",nabla_norm
+   plt.plot(counts, training_accuracies, label='Training Accuracy')
+   plt.plot(counts, test_accuracies, label='Testing Accuracy')
+   plt.xlabel('Number of Iterations')
+   plt.ylabel('Accuracy %')
+   plt.legend()
+   plt.savefig('gradient_descent_accuracy')
 
 if __name__ == "__main__": main()

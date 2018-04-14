@@ -1,0 +1,44 @@
+w:
+[[ -1.01137046e-01   4.58935299e-02  -2.73038670e-03   3.07201340e+00
+   -1.72254072e+01   3.71125235e+00   7.15862492e-03  -1.59900210e+00
+    3.73623375e-01  -1.57564197e-02  -1.02417703e+00   9.69321451e-03
+   -5.85969273e-01   3.95843212e+01]]
+ASE for training data: 22.081273187
+ASE for testing data: 22.6382562966
+w without dummy variable: 
+[[ -9.79342380e-02   4.89586765e-02  -2.53928478e-02   3.45087927e+00
+   -3.55458931e-01   5.81653272e+00  -3.31447963e-03  -1.02050134e+00
+    2.26563208e-01  -1.22458785e-02  -3.88029879e-01   1.70214971e-02
+   -4.85012955e-01]]
+ASE for training data without dummy variable: 24.4758827846
+ASE for testing data without dummy variable: 24.2922381757
+d = 2 :
+Training ASE = 22.0325163298
+Testing ASE = 23.0962953351
+d = 4 :
+Training ASE = 21.81999819
+Testing ASE = 22.914070853
+d = 6 :
+Training ASE = 21.8099215348
+Testing ASE = 23.545213969
+d = 8 :
+Training ASE = 21.3737094402
+Testing ASE = 22.693139159
+d = 10 :
+Training ASE = 20.8984607881
+Testing ASE = 24.5927550994
+d = 20 :
+Training ASE = 20.817078958
+Testing ASE = 24.1724414915
+d = 40 :
+Training ASE = 19.4987301391
+Testing ASE = 24.3218542782
+d = 60 :
+Training ASE = 18.8599917028
+Testing ASE = 28.6312466375
+d = 80 :
+Training ASE = 17.7585706263
+Testing ASE = 28.8796948852
+d = 100 :
+Training ASE = 17.0744562366
+Testing ASE = 28.9208935666

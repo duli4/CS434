@@ -2,9 +2,8 @@ import numpy as np
 import scipy as sp
 import math
 
-MU = 0.0000002
-MU = 0.1
-MyLambda = 0.1
+MU = 0.001
+MyLambda = 128.0
 
 def load_X_and_Y(filename,features,rows):
    f = open(filename,"r")
@@ -24,18 +23,15 @@ def calculate_w_BGD(X,Y,w,mu,Lambda):
    num_features = len(X[0])
    num_points = len(X)
    nabla = np.zeros( (num_features, 1) )
-   w_norm = np.linalg.norm( (w[0]) )
-   #print w_norm
-   w_norm_squared = math.pow(w_norm,2)
    for i in xrange(0,num_points):
       X_i = np.transpose(np.array([X[i]]))
-      w_T_X_i = np.matmul(np.transpose(w),X_i)[0][0]+Lambda*0.5*w_norm_squared
+      w_T_X_i = np.matmul(np.transpose(w),X_i)[0][0]
       if w_T_X_i < -700:
 	 y_i_hat = 0.0
       else:
 	 y_i_hat = 1.0/(1.0+math.exp(-w_T_X_i))
       nabla = nabla + (y_i_hat-Y[i][0])*X_i
-   w = w - mu*nabla
+   w = w - mu*(nabla + Lambda*w)
    nabla_norm = np.linalg.norm(nabla)
    return (w,nabla_norm)
 

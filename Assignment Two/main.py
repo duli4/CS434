@@ -6,11 +6,12 @@ import heapq
 def main():
 	(training_data,testing_data) = parse_data() if len(sys.argv) != 3 else parse_data(sys.argv[1],sys.argv[2])
 	normalize(training_data,testing_data)
-	count = 0
-	for i in xrange(0,len(training_data)):
-	   answer = knn(training_data[:i]+training_data[i+1:],training_data[i][1:],1)
-	   if (answer != int(training_data[i][0])): count = count + 1
-	print "leave-one-out cross-validation error:",count,"/",len(training_data),"=",count*100/len(training_data),"%"
+	for k in [1,3,5,7,9]:
+		count = 0
+		for i in xrange(0,len(training_data)):
+	   		answer = knn(training_data[:i]+training_data[i+1:],training_data[i][1:],k)
+	   		if (answer != int(training_data[i][0])): count = count + 1
+		print "leave-one-out cross-validation error for k =",k,":",count,"/",len(training_data),"=",float(count*100)/float(len(training_data)),"%"
 
 def parse_data(training_filename = "knn_train.csv", testing_filename = "knn_test.csv"):
 	training_file = open(training_filename, 'r')

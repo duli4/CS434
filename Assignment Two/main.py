@@ -29,17 +29,19 @@ class decision_tree_node():
 				sorted_data = sorted(data, key=lambda item:item[i])
 				for ind in xrange(1,len(sorted_data)):
 				   	if sorted_data[ind][0] != sorted_data[ind-1][0]:
-					   gain = data_entropy-float(ind)/float(len(data))*calculate_entropy(data[:ind])-float(len(data)-ind)/float(len(data))*calculate_entropy(data[ind:])
+					   gain = data_entropy-float(ind)/float(len(sorted_data))*calculate_entropy(sorted_data[:ind])-float(len(data)-ind)/float(len(data))*calculate_entropy(sorted_data[ind:])
 					   if gain > best_gain:
+					      best_gain = gain
 					      best_ind = i
 					      best_thresh = (sorted_data[ind-1][i]+sorted_data[ind][i])/2.0
 			self.ind = best_ind
 			self.thresh = best_thresh
 			self.left = decision_tree_node()
 			self.right = decision_tree_node()
-			sorted_data = sorted(data, key=lambda item:item[self.ind])
-			self.left.split(sorted_data[:self.ind],depth-1)
-			self.right.split(sorted_data[self.ind:],depth-1)
+			left_data = [item for item in data if item[self.ind] < self.thresh]
+			right_data = [item for item in data if item[self.ind] >= self.thresh]
+			self.left.split(left_data,depth-1)
+			self.right.split(right_data,depth-1)
 				
 	def get_choice(self,point):
 		if self.leaf == True:

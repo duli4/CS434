@@ -6,12 +6,25 @@ import heapq
 def main():
 	(training_data,testing_data) = parse_data() if len(sys.argv) != 3 else parse_data(sys.argv[1],sys.argv[2])
 	normalize(training_data,testing_data)
-	for k in [1,3,5,7,9]:
-		count = 0
+	for k in [i*2+1 for i in xrange(0,26)]:
+	   	print "k =",k
+		print "---------------------"
+		cv_count = 0
+		train_error_count = 0
 		for i in xrange(0,len(training_data)):
 	   		answer = knn(training_data[:i]+training_data[i+1:],training_data[i][1:],k)
-	   		if (answer != int(training_data[i][0])): count = count + 1
-		print "leave-one-out cross-validation error for k =",k,":",count,"/",len(training_data),"=",float(count*100)/float(len(training_data)),"%"
+	   		if (answer != int(training_data[i][0])): cv_count = cv_count + 1
+			answer = knn(training_data,training_data[i][1:],k)
+			if (answer != int(training_data[i][0])): train_error_count = train_error_count + 1
+		test_error_count = 0
+		for i in xrange(0,len(testing_data)):
+		   	answer = knn(training_data,testing_data[i][1:],k)
+			if (answer != int(testing_data[i][0])): test_error_count = test_error_count + 1
+		
+		print "training error count:",train_error_count,"/",len(training_data),"=",float(train_error_count*100)/float(len(training_data)),"%"	      
+		print "testing error count:",test_error_count,"/",len(testing_data),"=",float(test_error_count*100)/float(len(testing_data)),"%"	      
+		print "leave-one-out cross-validation error:",cv_count,"/",len(training_data),"=",float(cv_count*100)/float(len(training_data)),"%"
+		
 
 def parse_data(training_filename = "knn_train.csv", testing_filename = "knn_test.csv"):
 	training_file = open(training_filename, 'r')

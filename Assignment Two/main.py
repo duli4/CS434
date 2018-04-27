@@ -8,9 +8,9 @@ def main():
 	(training_data,testing_data) = parse_data() if len(sys.argv) != 3 else parse_data(sys.argv[1],sys.argv[2])
 	normalize(training_data,testing_data)
 	#run_knn(training_data,testing_data)
-	for d in xrange(0,7):
+	for d in xrange(0,10):
 		tree = decision_tree(training_data,d)
-		tree.print_tree()
+		#tree.print_tree()
 		training_correct_count = 0
 		testing_correct_count = 0
 		for point in training_data:
@@ -60,11 +60,15 @@ class decision_tree():
 		else:
 		   self.leaf = True
 		if self.leaf == True:
-		   self.choice = 1 if sum([training_data[p][0] for p in xrange(0,len(training_data))]) > 0 else -1
+		   total = sum([point[0] for point in training_data])
+		   if total == 0:
+		      self.choice = 0
+		   else:
+		      self.choice = 1 if total > 0 else -1
 	def get_choice(self,point):
 	   if self.leaf == True:
 	      return self.choice
-	   else:
+	   else: #recursively get the choice from the children of this node
 	      if point[self.feature_ind] <= self.thresh:
 		 return self.left.get_choice(point)
 	      else:

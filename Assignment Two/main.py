@@ -8,57 +8,12 @@ def main():
 	(training_data,testing_data) = parse_data() if len(sys.argv) != 3 else parse_data(sys.argv[1],sys.argv[2])
 	normalize(training_data,testing_data)
 	#run_knn(training_data,testing_data)
-	tree = decision_tree_node()
-	tree.split(training_data,1)
-	tree.print_tree(0)
+	
 	
 
-class decision_tree_node():
-   	def __init__(self):
+class decision_tree():
+   	def __init__(self,training_data):
 	     	self.leaf = False
-	def split(self,data,depth):
-	   	if (depth == 0):
-		   	self.leaf = True
-			self.choice = 1 if sum([data[i][0] for i in xrange(0,len(data))]) > 0 else -1
-		else:
-			data_entropy = calculate_entropy(data)
-			best_gain = 0.0
-			best_ind = 1
-			best_thresh = 0.5
-			for i in xrange(1,len(data[0])):
-				sorted_data = sorted(data, key=lambda item:item[i])
-				for ind in xrange(1,len(sorted_data)):
-				   	if sorted_data[ind][0] != sorted_data[ind-1][0]:
-					   gain = data_entropy-float(ind)/float(len(sorted_data))*calculate_entropy(sorted_data[:ind])-float(len(data)-ind)/float(len(data))*calculate_entropy(sorted_data[ind:])
-					   if gain > best_gain:
-					      best_gain = gain
-					      best_ind = i
-					      best_thresh = (sorted_data[ind-1][i]+sorted_data[ind][i])/2.0
-			self.ind = best_ind
-			self.thresh = best_thresh
-			self.left = decision_tree_node()
-			self.right = decision_tree_node()
-			left_data = [item for item in data if item[self.ind] < self.thresh]
-			right_data = [item for item in data if item[self.ind] >= self.thresh]
-			self.left.split(left_data,depth-1)
-			self.right.split(right_data,depth-1)
-				
-	def get_choice(self,point):
-		if self.leaf == True:
-		   	return self.choice
-		else:
-		   	if point[self.ind] < self.thresh:
-			   	return self.left.get_choice(point)
-			else:
-			   	return self.right.get_choice(point)
-	def print_tree(self,depth=0):
-	   	if (self.leaf == True):
-		   	print '-'*depth,"[",self.choice,"]"
-		else:
-		   	print '-'*depth,"data[",self.ind,"] <",self.thresh
-			self.left.print_tree(depth+1)
-			print '-'*depth,"data[",self.ind,"] >",self.thresh
-			self.right.print_tree(depth+1)
 
 def run_knn(training_data,testing_data):
 	for k in [i*2+1 for i in xrange(0,26)]+[75]:

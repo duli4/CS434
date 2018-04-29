@@ -2,6 +2,7 @@ import sys
 import time
 import numpy as np
 import matplotlib as mpl
+from collections import OrderedDict
 mpl.use('Agg') 
 import matplotlib.pyplot as plt
 import heapq
@@ -117,8 +118,10 @@ def run_knn(training_data,testing_data):
 		plt.plot(ks, tst_err, label='Testing Mistakes')
 		plt.xlabel('K Value')
 		plt.ylabel('Mistakes')
-		#plt.legend()
-		plt.savefig('kerrorsnl')
+		handles, labels = plt.gca().get_legend_handles_labels()
+		by_label = OrderedDict(zip(labels, handles))
+		plt.legend(by_label.values(), by_label.keys())
+		plt.savefig('kerrors')
 		
 		# print "training error count:",train_error_count,"/",len(training_data),"=",float(train_error_count*100)/float(len(training_data)),"%"	      
 		# print "testing error count:",test_error_count,"/",len(testing_data),"=",float(test_error_count*100)/float(len(testing_data)),"%"	      

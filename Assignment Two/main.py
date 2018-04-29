@@ -12,22 +12,35 @@ def main():
 	(training_data,testing_data) = parse_data() if len(sys.argv) != 3 else parse_data(sys.argv[1],sys.argv[2])
 	normalize(training_data,testing_data)
 	run_knn(training_data,testing_data)
-	# for d in xrange(0,10):
-		# tree = decision_tree(training_data,d)
-		# #tree.print_tree()
-		# training_correct_count = 0
-		# testing_correct_count = 0
-		# for point in training_data:
-		   # if tree.get_choice(point) == point[0]:
-		      # training_correct_count = training_correct_count+1
-		# for point in testing_data:
-		   # if tree.get_choice(point) == point[0]:
-		      # testing_correct_count = testing_correct_count+1
-		# print "depth =",d,":"
-		# print training_correct_count,"/",len(training_data),"=",float(training_correct_count)*100.0/float(len(training_data)),"% correct for training data"
-		# print testing_correct_count,"/",len(testing_data),"=",float(testing_correct_count)*100.0/float(len(testing_data)),"% correct for testing data"
+	ds = []
+	trn_err = []
+	tst_err = []
+	for d in xrange(0,10):
+		tree = decision_tree(training_data,d)
+		training_correct_count = 0
+		testing_correct_count = 0
+		for point in training_data:
+		   if tree.get_choice(point) == point[0]:
+		      training_correct_count = training_correct_count+1
+		for point in testing_data:
+		   if tree.get_choice(point) == point[0]:
+		      testing_correct_count = testing_correct_count+1
+		ds.append(d)
+		trn_err.append(100.0 - float(training_correct_count)*100.0/float(len(training_data)))
+		tst_err.append(100.0 - float(testing_correct_count)*100.0/float(len(testing_data)))
+		print "depth =",d,":"
+		print training_correct_count,"/",len(training_data),"=",100.0-float(training_correct_count)*100.0/float(len(training_data)),"% incorrect for training data"
+		print testing_correct_count,"/",len(testing_data),"=",100.0-float(testing_correct_count)*100.0/float(len(testing_data)),"% incorrect for testing data"
+		#tree.print_tree()
+	plt.plot(ds, trn_err, label='Training Error Rate')
+	plt.plot(ds, tst_err, label='Testing Error Rate')
+	plt.xlabel('Depth')
+	plt.ylabel('Error Rate')
+	handles, labels = plt.gca().get_legend_handles_labels()
+	by_label = OrderedDict(zip(labels, handles))
+	plt.legend(by_label.values(), by_label.keys())
+	plt.savefig('dterrors')
 	
-
 class decision_tree():
    	def __init__(self,training_data,depth):
 	     	self.leaf = False

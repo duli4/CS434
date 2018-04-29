@@ -1,27 +1,30 @@
 import sys
 import time
 import numpy as np
+import matplotlib as mpl
+mpl.use('Agg') 
+import matplotlib.pyplot as plt
 import heapq
 import math
 
 def main():
 	(training_data,testing_data) = parse_data() if len(sys.argv) != 3 else parse_data(sys.argv[1],sys.argv[2])
 	normalize(training_data,testing_data)
-	#run_knn(training_data,testing_data)
-	for d in xrange(0,10):
-		tree = decision_tree(training_data,d)
-		#tree.print_tree()
-		training_correct_count = 0
-		testing_correct_count = 0
-		for point in training_data:
-		   if tree.get_choice(point) == point[0]:
-		      training_correct_count = training_correct_count+1
-		for point in testing_data:
-		   if tree.get_choice(point) == point[0]:
-		      testing_correct_count = testing_correct_count+1
-		print "depth =",d,":"
-		print training_correct_count,"/",len(training_data),"=",float(training_correct_count)*100.0/float(len(training_data)),"% correct for training data"
-		print testing_correct_count,"/",len(testing_data),"=",float(testing_correct_count)*100.0/float(len(testing_data)),"% correct for testing data"
+	run_knn(training_data,testing_data)
+	# for d in xrange(0,10):
+		# tree = decision_tree(training_data,d)
+		# #tree.print_tree()
+		# training_correct_count = 0
+		# testing_correct_count = 0
+		# for point in training_data:
+		   # if tree.get_choice(point) == point[0]:
+		      # training_correct_count = training_correct_count+1
+		# for point in testing_data:
+		   # if tree.get_choice(point) == point[0]:
+		      # testing_correct_count = testing_correct_count+1
+		# print "depth =",d,":"
+		# print training_correct_count,"/",len(training_data),"=",float(training_correct_count)*100.0/float(len(training_data)),"% correct for training data"
+		# print testing_correct_count,"/",len(testing_data),"=",float(testing_correct_count)*100.0/float(len(testing_data)),"% correct for testing data"
 	
 
 class decision_tree():
@@ -84,9 +87,15 @@ class decision_tree():
 	      self.right.print_tree(depth+1)
 
 def run_knn(training_data,testing_data):
+	ks = []
+	trn_err = []
+	trn_err_loo = []
+	tst_err = []
+	
 	for k in [i*2+1 for i in xrange(0,26)]:
 	   	print "k =",k
 		print "---------------------"
+		ks.append(k)
 		cv_count = 0
 		train_error_count = 0
 		for i in xrange(0,len(training_data)):
@@ -100,6 +109,16 @@ def run_knn(training_data,testing_data):
 		for i in xrange(0,len(testing_data)):
 		  answer = knn(training_data,testing_data[i][1:],k)
 		  if (answer != int(testing_data[i][0])): test_error_count = test_error_count + 1
+		trn_err.append(train_error_count)
+		tst_err.append(test_error_count)
+		trn_err_loo.append(cv_count)
+		plt.plot(ks, trn_err, label='Training Mistakes')
+		plt.plot(ks, trn_err_loo, label='Leave One Out CV Mistakes')
+		plt.plot(ks, tst_err, label='Testing Mistakes')
+		plt.xlabel('K Value')
+		plt.ylabel('Mistakes')
+		#plt.legend()
+		plt.savefig('kerrorsnl')
 		
 		# print "training error count:",train_error_count,"/",len(training_data),"=",float(train_error_count*100)/float(len(training_data)),"%"	      
 		# print "testing error count:",test_error_count,"/",len(testing_data),"=",float(test_error_count*100)/float(len(testing_data)),"%"	      

@@ -95,6 +95,11 @@ def test_log_reg(type = 'batch'):
 def test_knn():
 	trn = ds.DataSet("./Data/knn_train.csv", set_type='knn', delim = ',', y_col=0)
 	tst = ds.DataSet("./Data/knn_test.csv", set_type='knn', delim = ',', y_col=0)
+	
+	trn_ks = mla.get_best_k_cv(trn.data_mx, trn.data_my, 51)
+	tst_ks = mla.get_best_k_cv(trn.data_mx, trn.data_my, 51)
+	
+	print trn_ks
 
 def test_dt():
 	trn = ds.DataSet("./Data/knn_train.csv", set_type='dt', delim = ',', y_col=0)

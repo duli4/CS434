@@ -122,9 +122,9 @@ def get_best_k_cv(mx, my, max_k, loo = 0, minf = 1, maxf = 20):
 		trn_xs = get_joined_matrices(lx[:i]+lx[i+1:])
 		trn_ys = get_joined_matrices(ly[:i]+ly[i+1:])
 		errs.append(get_k_errs(trn_xs, trn_ys,vx, vy, max_k, loo))
+		print errs[i]
 	
 	total_avg_errs = get_avg_errs(errs, folds, (max_k-1)/2)
-	print total_avg_errs
 	
 	return list(sorted(total_avg_errs, key=lambda t: t[1]))[0][0]
 			

@@ -16,27 +16,30 @@ import matplotlib.pyplot as plt
 cuda = torch.cuda.is_available()
 
 
+
 class Net(nn.Module):
 	def __init__(self):
 		super(Net, self).__init__()
-		self.fc1 = nn.Linear(28*28, 50)
-		self.fc1_drop = nn.Dropout(0.2)
-		self.fc2 = nn.Linear(50, 50)
-		self.fc2_drop = nn.Dropout(0.2)
-		self.fc3 = nn.Linear(50, 10)
+		self.conv1 = nn.Conv2d(3, 6, 5)
+		self.pool = nn.MaxPool2d(2, 2)
+		self.conv2 = nn.Conv2d(6, 16, 5)
+		self.fc1 = nn.Linear(16 * 5 * 5, 120)
+		self.fc2 = nn.Linear(120, 84)
+		self.fc3 = nn.Linear(84, 10)
 
 	def forward(self, x):
-		x = x.view(-1, 28*28)
+		x = self.pool(F.relu(self.conv1(x)))
+		x = self.pool(F.relu(self.conv2(x)))
+		x = x.view(-1, 16 * 5 * 5)
 		x = F.relu(self.fc1(x))
-		x = self.fc1_drop(x)
 		x = F.relu(self.fc2(x))
-		x = self.fc2_drop(x)
-		return F.log_softmax(self.fc3(x))
+		x = self.fc3(x)
+		return x
 
 def main():
 	print('Using PyTorch version:', torch.__version__, 'CUDA:', cuda)	
 	
-	train_loader, validation_loader = get_data()
+	train_loader, validation_loader = get_data('CIFAR10')
 	for (X_train, y_train) in train_loader:
 			print('X_train:', X_train.size(), 'type:', X_train.type())
 			print('y_train:', y_train.size(), 'type:', y_train.type())
@@ -49,21 +52,26 @@ def main():
 	optimizer = optim.SGD(model.parameters(), lr=0.01, momentum=0.5)
 	print(model)
 	
-	epochs = 10
+	correct = 0
+	total = 0
+	with torch.no_grad():
+		for data in validation_loader:
+			images, labels = data
+			outputs = model(images)
+			_, predicted = torch.max(outputs.data, 1)
+			total += labels.size(0)
+			correct += (predicted == labels).sum().item()
 
-	lossv, accv = [], []
-	for epoch in range(1, epochs + 1):
-			train(model, train_loader, optimizer, epoch)
-			validate(model, validation_loader, lossv, accv)
-			
+	print('Accuracy of the network on the 10000 test images: %d %%' % (
+		100 * correct / total))
 	
-	plt.figure(figsize=(5,3))
-	plt.plot(np.arange(1,epochs+1), lossv)
-	plt.title('validation loss')
+	
+	# epochs = 10
 
-	plt.figure(figsize=(5,3))
-	plt.plot(np.arange(1,epochs+1), accv)
-	plt.title('validation accuracy');
+	# lossv, accv = [], []
+	# for epoch in range(1, epochs + 1):
+			# train(model, train_loader, optimizer, epoch)
+			# validate(model, validation_loader)
 	
 def train(model, train_loader, optimizer, epoch, log_interval=100):
 	model.train()
@@ -81,7 +89,7 @@ def train(model, train_loader, optimizer, epoch, log_interval=100):
 				epoch, batch_idx * len(data), len(train_loader.dataset),
 				100. * batch_idx / len(train_loader), loss.data[0]))
 				
-def validate(model, validation_loader, loss_vector, accuracy_vector):
+def validate(model, validation_loader):
 	model.eval()
 	val_loss, correct = 0, 0
 	for data, target in validation_loader:
@@ -94,10 +102,10 @@ def validate(model, validation_loader, loss_vector, accuracy_vector):
 		correct += pred.eq(target.data).cpu().sum()
 
 	val_loss /= len(validation_loader)
-	loss_vector.append(val_loss)
+	#loss_vector.append(val_loss)
 
 	accuracy = 100. * correct / len(validation_loader.dataset)
-	accuracy_vector.append(accuracy)
+	#accuracy_vector.append(accuracy)
 	
 	print('\nValidation set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
 			val_loss, correct, len(validation_loader.dataset), accuracy))
@@ -111,14 +119,14 @@ def get_data(set_name = 'MNIST'):
 			datasets.CIFAR10('./data', train=True, download=True,
 										 transform=transforms.Compose([
 												 transforms.ToTensor(),
-												 transforms.Normalize((0.1307,), (0.3081,))
+												 transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
 										 ])),
 			batch_size=batch_size, shuffle=True, **kwargs)
 
 		validation_loader = torch.utils.data.DataLoader(
 			datasets.CIFAR10('./data', train=False, transform=transforms.Compose([
 												 transforms.ToTensor(),
-												 transforms.Normalize((0.1307,), (0.3081,))
+												 transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
 										 ])),
 			batch_size=batch_size, shuffle=False, **kwargs)
 	elif set_name == 'MNIST':

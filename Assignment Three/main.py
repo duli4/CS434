@@ -1,3 +1,4 @@
+#Imports
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -11,34 +12,131 @@ mpl.use('Agg')
 import matplotlib.pyplot as plt
 #import seaborn as sns
 
+#Globals
 cuda = torch.cuda.is_available()
-print('Using PyTorch version:', torch.__version__, 'CUDA:', cuda)
+
+
+class Net(nn.Module):
+	def __init__(self):
+		super(Net, self).__init__()
+		self.fc1 = nn.Linear(28*28, 50)
+		self.fc1_drop = nn.Dropout(0.2)
+		self.fc2 = nn.Linear(50, 50)
+		self.fc2_drop = nn.Dropout(0.2)
+		self.fc3 = nn.Linear(50, 10)
+
+	def forward(self, x):
+		x = x.view(-1, 28*28)
+		x = F.relu(self.fc1(x))
+		x = self.fc1_drop(x)
+		x = F.relu(self.fc2(x))
+		x = self.fc2_drop(x)
+		return F.log_softmax(self.fc3(x))
 
 def main():
-	#train_sets is a list of 5 dictionaries, each containing two keys: "data" and "labels"
+	print('Using PyTorch version:', torch.__version__, 'CUDA:', cuda)	
 	
-	#Data is a 10000x3072 numpy array of uint8s, each row is a 32x32 colour image.
-	#The first 1024 entries contain the red channel values, the next 1024 the green,
-	#and the final 1024 the blue.
+	train_loader, validation_loader = get_data()
+	for (X_train, y_train) in train_loader:
+			print('X_train:', X_train.size(), 'type:', X_train.type())
+			print('y_train:', y_train.size(), 'type:', y_train.type())
+			break
+			
+	model = Net()
+	if cuda:
+		model.cuda()
 	
-	#Labels is a list of 10000 numbers in the range 0-9. The number at index i
-	#	indicates the label of the ith image in the array data.
-	train_sets = [unpickle("cifar-10-batches-py/data_batch_" + str(i)) for i in xrange(1, 6)]
+	optimizer = optim.SGD(model.parameters(), lr=0.01, momentum=0.5)
+	print(model)
 	
-	#Same as train_sets, but a single dictionary with testing data
-	test_set = unpickle("cifar-10-batches-py/test_batch")
+	epochs = 10
+
+	lossv, accv = [], []
+	for epoch in range(1, epochs + 1):
+			train(model, train_loader, optimizer, epoch)
+			validate(model, validation_loader, lossv, accv)
+			
 	
-	#The 10 label names associated with the numbers in the "labels" list that each
-	#dictionary containing data has.
-	meta_set = unpickle("cifar-10-batches-py/batches.meta")
+	plt.figure(figsize=(5,3))
+	plt.plot(np.arange(1,epochs+1), lossv)
+	plt.title('validation loss')
+
+	plt.figure(figsize=(5,3))
+	plt.plot(np.arange(1,epochs+1), accv)
+	plt.title('validation accuracy');
 	
-	#print [train_sets[i]["data"][0] for i in xrange(5)]
+def train(model, train_loader, optimizer, epoch, log_interval=100):
+	model.train()
+	for batch_idx, (data, target) in enumerate(train_loader):
+		if cuda:
+			data, target = data.cuda(), target.cuda()
+		data, target = Variable(data), Variable(target)
+		optimizer.zero_grad()
+		output = model(data)
+		loss = F.nll_loss(output, target)
+		loss.backward()
+		optimizer.step()
+		if batch_idx % log_interval == 0:
+			print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
+				epoch, batch_idx * len(data), len(train_loader.dataset),
+				100. * batch_idx / len(train_loader), loss.data[0]))
+				
+def validate(model, validation_loader, loss_vector, accuracy_vector):
+	model.eval()
+	val_loss, correct = 0, 0
+	for data, target in validation_loader:
+		if cuda:
+			data, target = data.cuda(), target.cuda()
+		data, target = Variable(data, volatile=True), Variable(target)
+		output = model(data)
+		val_loss += F.nll_loss(output, target).data[0]
+		pred = output.data.max(1)[1] # get the index of the max log-probability
+		correct += pred.eq(target.data).cpu().sum()
+
+	val_loss /= len(validation_loader)
+	loss_vector.append(val_loss)
+
+	accuracy = 100. * correct / len(validation_loader.dataset)
+	accuracy_vector.append(accuracy)
 	
-def unpickle(file):
-    import cPickle
-    with open(file, 'rb') as fo:
-        dict = cPickle.load(fo)
-    return dict
+	print('\nValidation set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
+			val_loss, correct, len(validation_loader.dataset), accuracy))
+
+def get_data(set_name = 'MNIST'):
+	batch_size = 32
+	kwargs = {'num_workers': 1, 'pin_memory': True} if cuda else {}
+
+	if set_name == 'CIFAR10':
+		train_loader = torch.utils.data.DataLoader(
+			datasets.CIFAR10('./data', train=True, download=True,
+										 transform=transforms.Compose([
+												 transforms.ToTensor(),
+												 transforms.Normalize((0.1307,), (0.3081,))
+										 ])),
+			batch_size=batch_size, shuffle=True, **kwargs)
+
+		validation_loader = torch.utils.data.DataLoader(
+			datasets.CIFAR10('./data', train=False, transform=transforms.Compose([
+												 transforms.ToTensor(),
+												 transforms.Normalize((0.1307,), (0.3081,))
+										 ])),
+			batch_size=batch_size, shuffle=False, **kwargs)
+	elif set_name == 'MNIST':
+		train_loader = torch.utils.data.DataLoader(
+			datasets.MNIST('./data', train=True, download=True,
+									 transform=transforms.Compose([
+											 transforms.ToTensor(),
+											 transforms.Normalize((0.1307,), (0.3081,))
+									 ])),
+		batch_size=batch_size, shuffle=True, **kwargs)
+
+	validation_loader = torch.utils.data.DataLoader(
+		datasets.MNIST('./data', train=False, transform=transforms.Compose([
+											 transforms.ToTensor(),
+											 transforms.Normalize((0.1307,), (0.3081,))
+									 ])),
+		batch_size=batch_size, shuffle=False, **kwargs)
+	return (train_loader, validation_loader)
 
 if __name__ == "__main__":
 	main()

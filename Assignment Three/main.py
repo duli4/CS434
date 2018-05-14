@@ -1,5 +1,6 @@
 #Imports
 import torch
+import torch.utils.data as data_utils
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
@@ -15,13 +16,23 @@ import matplotlib.pyplot as plt
 #Globals
 cuda = torch.cuda.is_available()
 
+class ChunkSampler(data_utils.sampler.Sampler):
+    def __init__(self, num_samples, start = 0):
+        self.num_samples = num_samples
+        self.start = start
 
+    def __iter__(self):
+        return iter(range(self.start, self.start + self.num_samples))
 
+    def __len__(self):
+        return self.num_samples
+	
 class Net(nn.Module):
 	def __init__(self):
 		super(Net, self).__init__()
 		# One hidden layer - 100 Nodes
 		self.fc1 = nn.Linear(3*32*32, 100)
+		self.fc1_drop = nn.Dropout(0.2)
 		self.fc2 = nn.Linear(100, 10)
 		
 		# Two hidden layes - 50 Nodes, 50 Nodes
@@ -34,7 +45,7 @@ class Net(nn.Module):
 		
 		# F.sigmoid can be replaced with F.relu for Part Two
 		x = F.sigmoid(self.fc1(x))
-		
+		x = self.fc1_drop(x)
 		# One hidden layer
 		x = self.fc2(x)
 		
@@ -47,18 +58,15 @@ class Net(nn.Module):
 def main():
 	print('Using PyTorch version:', torch.__version__, 'CUDA:', cuda)	
 	
-	train_loader, validation_loader = get_data()
+	train_loader, validation_loader, test_loader = get_data()
 	for X_train, y_train in train_loader:
 		print('X_train:', X_train.size(), 'type:', X_train.type())
 		print('y_train:', y_train.size(), 'type:', y_train.type())
 		break
-			
-	print(train_loader.dataset)
-	print(validation_loader.dataset)
 	
 	# Part One & Two - Change Activation Function in Net Object
 	for i in xrange(4):
-		cte(train_loader, validation_loader, F.nll_loss, 0.01*pow(10, -i), 0.9, 5)
+		cte(train_loader, validation_loader, F.nll_loss, 0.01*pow(10, -i), 0.9, 1)
 		
 	# Part Three
 	# Play with cte using different drop out, momentum, and weight decay.
@@ -91,7 +99,7 @@ def cte(train_loader, validation_loader, loss_function, learn_rate, momentum, ep
 	print('Accuracy of the network on the 10000 test images: %d %%' % (
 		100 * correct / total))
 	
-def train(net, train_loader, optimizer, epoch, loss_function, log_interval=100):
+def train(net, train_loader, optimizer, epoch, loss_function, log_interval=400):
 	net.train()
 	for batch_idx, (data, target) in enumerate(train_loader):
 		if cuda:
@@ -104,7 +112,7 @@ def train(net, train_loader, optimizer, epoch, loss_function, log_interval=100):
 		optimizer.step()
 		if batch_idx % log_interval == 0:
 			print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
-				epoch, batch_idx * len(data), len(train_loader.dataset),
+				epoch, batch_idx * len(data), len(train_loader) * train_loader.batch_size,
 				100. * batch_idx / len(train_loader), loss.data[0]))
 				
 def validate(net, validation_loader, loss_function):
@@ -122,11 +130,11 @@ def validate(net, validation_loader, loss_function):
 	val_loss /= len(validation_loader)
 	#loss_vector.append(val_loss)
 
-	accuracy = 100. * correct / len(validation_loader.dataset)
+	accuracy = 100. * correct / (len(validation_loader)*validation_loader.batch_size)
 	#accuracy_vector.append(accuracy)
 	
 	print('\nValidation set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
-			val_loss, correct, len(validation_loader.dataset), accuracy))
+			val_loss, correct, len(validation_loader)*validation_loader.batch_size, accuracy))
 
 def get_data():
 	transform = transforms.Compose(
@@ -134,15 +142,27 @@ def get_data():
 	batch_size = 10
 	kwargs = {'num_workers': 1, 'pin_memory': True} if cuda else {}
 
+	NUM_TRAIN = 40000
+	NUM_VAL = 10000
 	train_loader = torch.utils.data.DataLoader(
 		datasets.CIFAR10('./data', train=True, download=True, transform=transform),
-		batch_size=batch_size, shuffle=True, **kwargs)
+		batch_size=batch_size, sampler=ChunkSampler(NUM_TRAIN,0), **kwargs)
 
 	validation_loader = torch.utils.data.DataLoader(
+		datasets.CIFAR10('./data', train=True, transform=transform),
+		batch_size=batch_size, sampler=ChunkSampler(NUM_VAL,NUM_TRAIN), **kwargs)
+		
+	test_loader = torch.utils.data.DataLoader(
 		datasets.CIFAR10('./data', train=False, transform=transform),
 		batch_size=batch_size, shuffle=False, **kwargs)
 	
-	return train_loader, validation_loader
-
+	return train_loader, validation_loader, test_loader
+	
+def unpickle(file):
+	import cPickle
+	with open(file, 'rb') as fo:
+		dict = cPickle.load(fo)
+	return dict
+	
 if __name__ == "__main__":
 	main()

@@ -20,44 +20,70 @@ cuda = torch.cuda.is_available()
 class Net(nn.Module):
 	def __init__(self):
 		super(Net, self).__init__()
-		self.conv1 = nn.Conv2d(3, 6, 5)
-		self.pool = nn.MaxPool2d(2, 2)
-		self.conv2 = nn.Conv2d(6, 16, 5)
-		self.fc1 = nn.Linear(16 * 5 * 5, 120)
-		self.fc2 = nn.Linear(120, 84)
-		self.fc3 = nn.Linear(84, 10)
+		# One hidden layer - 100 Nodes
+		self.fc1 = nn.Linear(3*32*32, 100)
+		self.fc2 = nn.Linear(100, 10)
+		
+		# Two hidden layes - 50 Nodes, 50 Nodes
+		# self.fc1 = nn.Linear(3*32*32, 50)
+		# self.fc2 = nn.Linear(50, 50)
+		# self.fc3 = nn.Linear(50, 10)
 
 	def forward(self, x):
-		x = self.pool(F.relu(self.conv1(x)))
-		x = self.pool(F.relu(self.conv2(x)))
-		x = x.view(-1, 16 * 5 * 5)
-		x = F.relu(self.fc1(x))
-		x = F.relu(self.fc2(x))
-		x = self.fc3(x)
+		x = x.view(-1, 3*32*32)
+		
+		# F.sigmoid can be replaced with F.relu for Part Two
+		x = F.sigmoid(self.fc1(x))
+		
+		# One hidden layer
+		x = self.fc2(x)
+		
+		# Two hidden layers
+		# x = F.sigmoid(self.fc2(x))
+		# x = self.fc3(x)
+		
 		return x
 
 def main():
 	print('Using PyTorch version:', torch.__version__, 'CUDA:', cuda)	
 	
-	train_loader, validation_loader = get_data('CIFAR10')
-	for (X_train, y_train) in train_loader:
-			print('X_train:', X_train.size(), 'type:', X_train.type())
-			print('y_train:', y_train.size(), 'type:', y_train.type())
-			break
+	train_loader, validation_loader = get_data()
+	for X_train, y_train in train_loader:
+		print('X_train:', X_train.size(), 'type:', X_train.type())
+		print('y_train:', y_train.size(), 'type:', y_train.type())
+		break
 			
-	model = Net()
-	if cuda:
-		model.cuda()
+	print(train_loader.dataset)
+	print(validation_loader.dataset)
 	
-	optimizer = optim.SGD(model.parameters(), lr=0.01, momentum=0.5)
-	print(model)
+	# Part One & Two - Change Activation Function in Net Object
+	for i in xrange(4):
+		cte(train_loader, validation_loader, F.nll_loss, 0.01*pow(10, -i), 0.9, 5)
+		
+	# Part Three
+	# Play with cte using different drop out, momentum, and weight decay.
+	# Try to maximize accuracy / minimize loss
+	
+	# Part Four
+	# Comment out the One hidden layer code, uncomment Two hidden layers
+	# Test the same as in parts One & Two
+	
+
+def cte(train_loader, validation_loader, loss_function, learn_rate, momentum, epochs = 10):
+	net = Net()
+	if cuda:
+		net.cuda()
+	optimizer = optim.SGD(net.parameters(), lr=learn_rate, momentum=momentum)
+	for epoch in range(epochs):
+		train(net, train_loader, optimizer, epoch, loss_function)
+		validate(net, validation_loader, loss_function)	
 	
 	correct = 0
 	total = 0
 	with torch.no_grad():
 		for data in validation_loader:
 			images, labels = data
-			outputs = model(images)
+			outputs = net(images)
 			_, predicted = torch.max(outputs.data, 1)
 			total += labels.size(0)
 			correct += (predicted == labels).sum().item()
@@ -65,23 +91,15 @@ def main():
 	print('Accuracy of the network on the 10000 test images: %d %%' % (
 		100 * correct / total))
 	
-	
-	# epochs = 10
-
-	# lossv, accv = [], []
-	# for epoch in range(1, epochs + 1):
-			# train(model, train_loader, optimizer, epoch)
-			# validate(model, validation_loader)
-	
-def train(model, train_loader, optimizer, epoch, log_interval=100):
-	model.train()
+def train(net, train_loader, optimizer, epoch, loss_function, log_interval=100):
+	net.train()
 	for batch_idx, (data, target) in enumerate(train_loader):
 		if cuda:
 			data, target = data.cuda(), target.cuda()
 		data, target = Variable(data), Variable(target)
 		optimizer.zero_grad()
-		output = model(data)
-		loss = F.nll_loss(output, target)
+		output = net(data)
+		loss = F.cross_entropy(output, target)
 		loss.backward()
 		optimizer.step()
 		if batch_idx % log_interval == 0:
@@ -89,15 +107,15 @@ def train(model, train_loader, optimizer, epoch, log_interval=100):
 				epoch, batch_idx * len(data), len(train_loader.dataset),
 				100. * batch_idx / len(train_loader), loss.data[0]))
 				
-def validate(model, validation_loader):
-	model.eval()
+def validate(net, validation_loader, loss_function):
+	net.eval()
 	val_loss, correct = 0, 0
 	for data, target in validation_loader:
 		if cuda:
 			data, target = data.cuda(), target.cuda()
 		data, target = Variable(data, volatile=True), Variable(target)
-		output = model(data)
-		val_loss += F.nll_loss(output, target).data[0]
+		output = net(data)
+		val_loss += loss_function(output, target).data[0]
 		pred = output.data.max(1)[1] # get the index of the max log-probability
 		correct += pred.eq(target.data).cpu().sum()
 
@@ -110,41 +128,21 @@ def validate(model, validation_loader):
 	print('\nValidation set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
 			val_loss, correct, len(validation_loader.dataset), accuracy))
 
-def get_data(set_name = 'MNIST'):
-	batch_size = 32
+def get_data():
+	transform = transforms.Compose(
+    [transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
+	batch_size = 10
 	kwargs = {'num_workers': 1, 'pin_memory': True} if cuda else {}
 
-	if set_name == 'CIFAR10':
-		train_loader = torch.utils.data.DataLoader(
-			datasets.CIFAR10('./data', train=True, download=True,
-										 transform=transforms.Compose([
-												 transforms.ToTensor(),
-												 transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
-										 ])),
-			batch_size=batch_size, shuffle=True, **kwargs)
-
-		validation_loader = torch.utils.data.DataLoader(
-			datasets.CIFAR10('./data', train=False, transform=transforms.Compose([
-												 transforms.ToTensor(),
-												 transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
-										 ])),
-			batch_size=batch_size, shuffle=False, **kwargs)
-	elif set_name == 'MNIST':
-		train_loader = torch.utils.data.DataLoader(
-			datasets.MNIST('./data', train=True, download=True,
-									 transform=transforms.Compose([
-											 transforms.ToTensor(),
-											 transforms.Normalize((0.1307,), (0.3081,))
-									 ])),
+	train_loader = torch.utils.data.DataLoader(
+		datasets.CIFAR10('./data', train=True, download=True, transform=transform),
 		batch_size=batch_size, shuffle=True, **kwargs)
 
 	validation_loader = torch.utils.data.DataLoader(
-		datasets.MNIST('./data', train=False, transform=transforms.Compose([
-											 transforms.ToTensor(),
-											 transforms.Normalize((0.1307,), (0.3081,))
-									 ])),
+		datasets.CIFAR10('./data', train=False, transform=transform),
 		batch_size=batch_size, shuffle=False, **kwargs)
-	return (train_loader, validation_loader)
+	
+	return train_loader, validation_loader
 
 if __name__ == "__main__":
 	main()

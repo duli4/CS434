@@ -65,8 +65,10 @@ def main():
 		break
 	
 	# Part One & Two - Change Activation Function in Net Object
-	for i in xrange(4):
-		cte(train_loader, validation_loader, F.nll_loss, 0.01*pow(10, -i), 0.9, 1)
+	for i in xrange(6):
+	   	learn_rate = 0.1*pow(10,-i)
+		(net, results) = cte(train_loader, validation_loader, F.nll_loss, learn_rate, 0.9, 1)
+		test_accuracy = test(net,test_loader)
 		
 	# Part Three
 	# Play with cte using different drop out, momentum, and weight decay.
@@ -82,14 +84,18 @@ def cte(train_loader, validation_loader, loss_function, learn_rate, momentum, ep
 	if cuda:
 		net.cuda()
 	optimizer = optim.SGD(net.parameters(), lr=learn_rate, momentum=momentum)
+	results = []
 	for epoch in range(epochs):
 		train(net, train_loader, optimizer, epoch, loss_function)
-		validate(net, validation_loader, loss_function)	
-	
+		results.append(validate(net, validation_loader, loss_function))
+	return (net, results)
+
+def test(net, test_loader):
+   	net.eval()
 	correct = 0
 	total = 0
 	with torch.no_grad():
-		for data in validation_loader:
+		for data in test_loader:
 			images, labels = data
 			outputs = net(images)
 			_, predicted = torch.max(outputs.data, 1)
@@ -98,6 +104,8 @@ def cte(train_loader, validation_loader, loss_function, learn_rate, momentum, ep
 
 	print('Accuracy of the network on the 10000 test images: %d %%' % (
 		100 * correct / total))
+
+	return float(correct) / float(total)
 	
 def train(net, train_loader, optimizer, epoch, loss_function, log_interval=400):
 	net.train()
@@ -135,6 +143,8 @@ def validate(net, validation_loader, loss_function):
 	
 	print('\nValidation set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
 			val_loss, correct, len(validation_loader)*validation_loader.batch_size, accuracy))
+
+	return val_loss, accuracy
 
 def get_data():
 	transform = transforms.Compose(

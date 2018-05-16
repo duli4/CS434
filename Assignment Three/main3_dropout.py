@@ -66,15 +66,15 @@ def main():
 		break
 	
 	# Part One & Two - Change Activation Function in Net Object
-	epochs = [i for i in xrange(1)]
-	data_vals = 2
+	epochs = [i for i in xrange(1,6)]
+	data_vals = 4
 	losses = []
 	accuracies = []
 	test_accuracies = []
 
 	for i in xrange(data_vals):
 		dropout_rate = .1 + .1*i
-		(net, results) = cte(train_loader, validation_loader, F.nll_loss, 0.1, 0.9, 5, dropout_rate)
+		(net, results) = cte(train_loader, validation_loader, F.cross_entropy, 0.1, 0.9, epochs = 5, dropout_rate = dropout_rate)
 		losses.append([item[0] for item in results])
 		accuracies.append([item[1] for item in results])
 		test_accuracies.append(test(net,test_loader))
@@ -92,7 +92,7 @@ def main():
 	for i in xrange(data_vals):
 		plt.plot(epochs, accuracies[i], label = 'Accuracy at dropout_rate ' + str(dropout_rate))
 	plt.xlabel('Epoch')
-	ply.ylabel('Val. Accuracy')
+	plt.ylabel('Val. Accuracy')
 	handles, labels = plt.gca().get_legend_handles_labels()
 	by_label = OrderedDict(zip(labels, handles))
 	plt.legend(by_label.values(), by_label.keys())
@@ -141,7 +141,7 @@ def train(net, train_loader, optimizer, epoch, loss_function, log_interval=400):
 		data, target = Variable(data), Variable(target)
 		optimizer.zero_grad()
 		output = net(data)
-		loss = F.cross_entropy(output, target)
+		loss = loss_function(output, target)
 		loss.backward()
 		optimizer.step()
 		if batch_idx % log_interval == 0:

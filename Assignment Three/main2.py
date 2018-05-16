@@ -66,19 +66,19 @@ def main():
 		break
 	
 	# Part One & Two - Change Activation Function in Net Object
-	epochs = [i for i in xrange(2)]
-	data_vals = 2
+	epochs = [i for i in xrange(1,6)]
+	data_vals = 4
 	losses = []
 	accuracies = []
 	test_accuracies = []
 	for i in xrange(data_vals):
-	   	learn_rate = 0.1*pow(10,-i)
-		(net, results) = cte(train_loader, validation_loader, F.nll_loss, learn_rate, 0.9, epochs = 2)
+		learn_rate = 0.1*pow(10,-i)
+		(net, results) = cte(train_loader, validation_loader, F.cross_entropy, learn_rate, 0.9, epochs = 5)
 		losses.append([item[0] for item in results])
 		accuracies.append([item[1] for item in results])
 		test_accuracies.append(test(net,test_loader))
 	for i in xrange(data_vals):
-	   	print('Model ',i,': ',test_accuracies[i])
+		print('Model ',i,': ',test_accuracies[i])
 	for i in xrange(data_vals):
 		plt.plot(epochs, losses[i], label = 'Loss at learning rate ' + str(0.1*pow(10,-i)))
 	plt.xlabel('Epoch')
@@ -89,7 +89,7 @@ def main():
 	plt.savefig('p2_losses')
 	plt.close()
 	for i in xrange(data_vals):
-	   	plt.plot(epochs, accuracies[i], label = 'Accuracy at learning rate ' + str(0.1*pow(10,-i)))
+		plt.plot(epochs, accuracies[i], label = 'Accuracy at learning rate ' + str(0.1*pow(10,-i)))
 	plt.xlabel('Epoch')
 	plt.ylabel('Val. Accuracy')
 	handles, labels = plt.gca().get_legend_handles_labels()

@@ -66,14 +66,14 @@ def main():
 		break
 	
 	# Part One & Two - Change Activation Function in Net Object
-	epochs = [i for i in xrange(1)]
-	data_vals = 2
+	epochs = [i for i in xrange(1,6)]
+	data_vals = 4
 	losses = []
 	accuracies = []
 	test_accuracies = []
 	for i in xrange(data_vals):
 	   	learn_rate = 0.1*pow(10,-i)
-		(net, results) = cte(train_loader, validation_loader, F.nll_loss, learn_rate, 0.9, epochs = 1)
+		(net, results) = cte(train_loader, validation_loader, F.cross_entropy, learn_rate, 0.9, epochs = 5)
 		losses.append([item[0] for item in results])
 		accuracies.append([item[1] for item in results])
 		test_accuracies.append(test(net,test_loader))
@@ -89,7 +89,7 @@ def main():
 	plt.savefig('p1_losses')
 	plt.close()
 	for i in xrange(data_vals):
-	   	plt.plot(epochs, accuracies[i], label = 'Accuracy at learning rate ' + str(0.1*pow(10,-i)))
+		plt.plot(epochs, accuracies[i], label = 'Accuracy at learning rate ' + str(0.1*pow(10,-i)))
 	plt.xlabel('Epoch')
 	plt.ylabel('Val. Accuracy')
 	handles, labels = plt.gca().get_legend_handles_labels()
@@ -100,35 +100,6 @@ def main():
 	# Part Three
 	# Play with cte using different drop out, momentum, and weight decay.
 	# Try to maximize accuracy / minimize loss
-	
-	# losses = []
-	# accuracies = []
-	# test_accuracies = []
-	# for i in xrange(6):
-		# dropout_rate = .1 + .1*i
-		# (net, results) = cte(train_loader, validation_loader, F.nll_loss, 0.1, 0.9, 5, dropout_rate)
-		# losses.append([item[0] for item in results])
-		# accuracies.append([item[1] for item in results])
-		# test_accuracies.append(test(net,test_loader))
-	# for i in xrange(6):
-		# print('Model ',i,': ',test_accuracies[i])
-	# for i in xrange(6):
-		# plt.plot(epochs, losses[i], label = 'Loss at dropout_rate ' + str(dropout_rate))
-	# plt.xlabel('Epoch')
-	# plt.ylabel('Avg. Loss')
-	# handles, labels = plt.gca().get_legend_handles_labels()
-	# by_label = OrderedDict(zip(labels, handles))
-	# plt.legend(by_label.values(), by_label.keys())
-	# plt.savefig('losses')
-	# plt.close()
-	# for i in xrange(6):
-		# plt.plot(epochs, accuracies[i], label = 'Accuracy at dropout_rate ' + str(dropout_rate))
-	# plt.xlabel('Epoch')
-	# ply.ylabel('Val. Accuracy')
-	# handles, labels = plt.gca().get_legend_handles_labels()
-	# by_label = OrderedDict(zip(labels, handles))
-	# plt.legend(by_label.values(), by_label.keys())
-	# plt.savefig('accuracies')
 	
 	
 	

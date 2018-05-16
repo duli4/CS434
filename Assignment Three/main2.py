@@ -44,7 +44,7 @@ class Net(nn.Module):
 		x = x.view(-1, 3*32*32)
 		
 		# F.sigmoid can be replaced with F.relu for Part Two
-		x = F.sigmoid(self.fc1(x))
+		x = F.relu(self.fc1(x))
 		x = self.fc1_drop(x)
 		# One hidden layer
 		x = self.fc2(x)
@@ -84,7 +84,7 @@ def main():
 	handles, labels = plt.gca().get_legend_handles_labels()
 	by_label = OrderedDict(zip(labels, handles))
 	plt.legend(by_label.values(), by_label.keys())
-	plt.savefig('losses')
+	plt.savefig('losses2')
 	plt.close()
 	for i in xrange(6):
 	   	plt.plot(epochs, accuracies[i], label = 'Accuracy at learning rate ' + str(0.1*pow(10,-i)))
@@ -93,7 +93,7 @@ def main():
 	handles, labels = plt.gca().get_legend_handles_labels()
 	by_label = OrderedDict(zip(labels, handles))
 	plt.legend(by_label.values(), by_label.keys())
-	plt.savefig('accuracies')
+	plt.savefig('accuracies2')
 
 	# Part Three
 	# Play with cte using different drop out, momentum, and weight decay.

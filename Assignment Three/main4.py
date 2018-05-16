@@ -81,7 +81,7 @@ def main():
 	plt.legend(by_label.values(), by_label.keys())
 	plt.savefig('p4_losses')
 	plt.close()
-	plot.plot(epohcs, [item[1] for item in results], label = 'Val. Accuracy Part 4')
+	plt.plot(epochs, [item[1] for item in results], label = 'Val. Accuracy Part 4')
 	plt.xlabel('Epoch')
 	plt.ylabel('Val. Accuracy')
 	handles, labels = plt.gca().get_legend_handles_labels()

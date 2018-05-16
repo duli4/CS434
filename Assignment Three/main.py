@@ -29,11 +29,11 @@ class ChunkSampler(data_utils.sampler.Sampler):
         return self.num_samples
 	
 class Net(nn.Module):
-	def __init__(self):
+	def __init__(self, dropout_rate = 0.2):
 		super(Net, self).__init__()
 		# One hidden layer - 100 Nodes
 		self.fc1 = nn.Linear(3*32*32, 100)
-		self.fc1_drop = nn.Dropout(0.2)
+		self.fc1_drop = nn.Dropout(dropout_rate)
 		self.fc2 = nn.Linear(100, 10)
 		
 		# Two hidden layes - 50 Nodes, 50 Nodes
@@ -66,47 +66,79 @@ def main():
 		break
 	
 	# Part One & Two - Change Activation Function in Net Object
-	epochs = [i for i in xrange(10)]
+	epochs = [i for i in xrange(1)]
+	data_vals = 2
 	losses = []
 	accuracies = []
 	test_accuracies = []
-	for i in xrange(6):
+	for i in xrange(data_vals):
 	   	learn_rate = 0.1*pow(10,-i)
-		(net, results) = cte(train_loader, validation_loader, F.nll_loss, learn_rate, 0.9, 10)
+		(net, results) = cte(train_loader, validation_loader, F.nll_loss, learn_rate, 0.9, epochs = 1)
 		losses.append([item[0] for item in results])
 		accuracies.append([item[1] for item in results])
 		test_accuracies.append(test(net,test_loader))
-	for i in xrange(6):
+	for i in xrange(data_vals):
 	   	print('Model ',i,': ',test_accuracies[i])
-	for i in xrange(6):
+	for i in xrange(data_vals):
 		plt.plot(epochs, losses[i], label = 'Loss at learning rate ' + str(0.1*pow(10,-i)))
 	plt.xlabel('Epoch')
 	plt.ylabel('Avg. Loss')
 	handles, labels = plt.gca().get_legend_handles_labels()
 	by_label = OrderedDict(zip(labels, handles))
 	plt.legend(by_label.values(), by_label.keys())
-	plt.savefig('losses')
+	plt.savefig('p1_losses')
 	plt.close()
-	for i in xrange(6):
+	for i in xrange(data_vals):
 	   	plt.plot(epochs, accuracies[i], label = 'Accuracy at learning rate ' + str(0.1*pow(10,-i)))
 	plt.xlabel('Epoch')
-	ply.ylabel('Val. Accuracy')
+	plt.ylabel('Val. Accuracy')
 	handles, labels = plt.gca().get_legend_handles_labels()
 	by_label = OrderedDict(zip(labels, handles))
 	plt.legend(by_label.values(), by_label.keys())
-	plt.savefig('accuracies')
-
+	plt.savefig('p1_accuracies')
+	
 	# Part Three
 	# Play with cte using different drop out, momentum, and weight decay.
 	# Try to maximize accuracy / minimize loss
+	
+	# losses = []
+	# accuracies = []
+	# test_accuracies = []
+	# for i in xrange(6):
+		# dropout_rate = .1 + .1*i
+		# (net, results) = cte(train_loader, validation_loader, F.nll_loss, 0.1, 0.9, 5, dropout_rate)
+		# losses.append([item[0] for item in results])
+		# accuracies.append([item[1] for item in results])
+		# test_accuracies.append(test(net,test_loader))
+	# for i in xrange(6):
+		# print('Model ',i,': ',test_accuracies[i])
+	# for i in xrange(6):
+		# plt.plot(epochs, losses[i], label = 'Loss at dropout_rate ' + str(dropout_rate))
+	# plt.xlabel('Epoch')
+	# plt.ylabel('Avg. Loss')
+	# handles, labels = plt.gca().get_legend_handles_labels()
+	# by_label = OrderedDict(zip(labels, handles))
+	# plt.legend(by_label.values(), by_label.keys())
+	# plt.savefig('losses')
+	# plt.close()
+	# for i in xrange(6):
+		# plt.plot(epochs, accuracies[i], label = 'Accuracy at dropout_rate ' + str(dropout_rate))
+	# plt.xlabel('Epoch')
+	# ply.ylabel('Val. Accuracy')
+	# handles, labels = plt.gca().get_legend_handles_labels()
+	# by_label = OrderedDict(zip(labels, handles))
+	# plt.legend(by_label.values(), by_label.keys())
+	# plt.savefig('accuracies')
+	
+	
 	
 	# Part Four
 	# Comment out the One hidden layer code, uncomment Two hidden layers
 	# Test the same as in parts One & Two
 	
 
-def cte(train_loader, validation_loader, loss_function, learn_rate, momentum, epochs = 10):
-	net = Net()
+def cte(train_loader, validation_loader, loss_function, learn_rate, momentum, epochs = 10, dropout_rate = 0.2):
+	net = Net(dropout_rate)
 	if cuda:
 		net.cuda()
 	optimizer = optim.SGD(net.parameters(), lr=learn_rate, momentum=momentum)
@@ -141,7 +173,7 @@ def train(net, train_loader, optimizer, epoch, loss_function, log_interval=400):
 		data, target = Variable(data), Variable(target)
 		optimizer.zero_grad()
 		output = net(data)
-		loss = F.cross_entropy(output, target)
+		loss = loss_function(output, target)
 		loss.backward()
 		optimizer.step()
 		if batch_idx % log_interval == 0:

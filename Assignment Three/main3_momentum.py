@@ -29,11 +29,11 @@ class ChunkSampler(data_utils.sampler.Sampler):
         return self.num_samples
 	
 class Net(nn.Module):
-	def __init__(self):
+	def __init__(self, dropout_rate = 0.2):
 		super(Net, self).__init__()
 		# One hidden layer - 100 Nodes
 		self.fc1 = nn.Linear(3*32*32, 100)
-		self.fc1_drop = nn.Dropout(0.2)
+		self.fc1_drop = nn.Dropout(dropout_rate)
 		self.fc2 = nn.Linear(100, 10)
 		
 		# Two hidden layes - 50 Nodes, 50 Nodes
@@ -45,7 +45,7 @@ class Net(nn.Module):
 		x = x.view(-1, 3*32*32)
 		
 		# F.sigmoid can be replaced with F.relu for Part Two
-		x = F.relu(self.fc1(x))
+		x = F.sigmoid(self.fc1(x))
 		x = self.fc1_drop(x)
 		# One hidden layer
 		x = self.fc2(x)
@@ -66,48 +66,47 @@ def main():
 		break
 	
 	# Part One & Two - Change Activation Function in Net Object
-	epochs = [i for i in xrange(2)]
+	epochs = [i for i in xrange(1)]
 	data_vals = 2
 	losses = []
 	accuracies = []
 	test_accuracies = []
+	
 	for i in xrange(data_vals):
-	   	learn_rate = 0.1*pow(10,-i)
-		(net, results) = cte(train_loader, validation_loader, F.nll_loss, learn_rate, 0.9, epochs = 2)
+		momentum = .9 - .1*i
+		(net, results) = cte(train_loader, validation_loader, F.nll_loss, 0.1, momentum, epochs = 1)
 		losses.append([item[0] for item in results])
 		accuracies.append([item[1] for item in results])
 		test_accuracies.append(test(net,test_loader))
 	for i in xrange(data_vals):
-	   	print('Model ',i,': ',test_accuracies[i])
+		print('Model ',i,': ',test_accuracies[i])
 	for i in xrange(data_vals):
-		plt.plot(epochs, losses[i], label = 'Loss at learning rate ' + str(0.1*pow(10,-i)))
+		plt.plot(epochs, losses[i], label = 'Loss at momentum ' + str(momentum))
 	plt.xlabel('Epoch')
 	plt.ylabel('Avg. Loss')
 	handles, labels = plt.gca().get_legend_handles_labels()
 	by_label = OrderedDict(zip(labels, handles))
 	plt.legend(by_label.values(), by_label.keys())
-	plt.savefig('p2_losses')
+	plt.savefig('p3m_losses')
 	plt.close()
 	for i in xrange(data_vals):
-	   	plt.plot(epochs, accuracies[i], label = 'Accuracy at learning rate ' + str(0.1*pow(10,-i)))
+		plt.plot(epochs, accuracies[i], label = 'Accuracy at momentum ' + str(momentum))
 	plt.xlabel('Epoch')
-	plt.ylabel('Val. Accuracy')
+	ply.ylabel('Val. Accuracy')
 	handles, labels = plt.gca().get_legend_handles_labels()
 	by_label = OrderedDict(zip(labels, handles))
 	plt.legend(by_label.values(), by_label.keys())
-	plt.savefig('p2_accuracies')
-
-	# Part Three
-	# Play with cte using different drop out, momentum, and weight decay.
-	# Try to maximize accuracy / minimize loss
+	plt.savefig('p3m_accuracies')
+	
+	
 	
 	# Part Four
 	# Comment out the One hidden layer code, uncomment Two hidden layers
 	# Test the same as in parts One & Two
 	
 
-def cte(train_loader, validation_loader, loss_function, learn_rate, momentum, epochs = 10):
-	net = Net()
+def cte(train_loader, validation_loader, loss_function, learn_rate, momentum, epochs = 10, dropout_rate = 0.2):
+	net = Net(dropout_rate)
 	if cuda:
 		net.cuda()
 	optimizer = optim.SGD(net.parameters(), lr=learn_rate, momentum=momentum)

@@ -4,6 +4,7 @@ import matplotlib as mpl
 mpl.use('Agg')
 import matplotlib.pyplot as plt
 from scipy.misc import toimage
+from collections import OrderedDict
 import random
 
 def load_data(filename):
@@ -14,7 +15,34 @@ def load_data(filename):
 
 def main():
    data = load_data('unsupervised.txt')
+   #PART 1: K-means with k = 2
    (partitions, centers, SSEs) = kmeans(data, k=2)
+   iterations = [i+1 for i in xrange(0, len(SSEs))]
+   plt.plot(iterations,SSEs,label = 'k-Means SSE at k=2')
+   plt.xlabel('Iterations')
+   plt.ylabel('SSE')
+   handles, labels = plt.gca().get_legend_handles_labels()
+   by_label = OrderedDict(zip(labels, handles))
+   plt.legend(by_label.values(), by_label.keys())
+   plt.savefig('p1_SSEs')
+   plt.close()
+   #PART 2: K-means model selection
+   best_SSEs = [-1 for k in xrange(2,11)]
+   k_choices = [k for k in xrange(2,11)]
+   for i in xrange(0, len(k_choices)):
+      for attempt in xrange(0,10):
+	 (partitions, centers, SSEs) = kmeans(data, k=k_choices[i])
+	 if best_SSEs[i] == -1 or SSEs[-1] < best_SSEs[i]:
+	    best_SSEs[i] = SSEs[-1]
+   plt.plot(k_choices,best_SSEs,label= 'best SSEs for k-Means')
+   plt.xlabel('k')
+   plt.ylabel('best SSE')
+   handles, labels = plt.gca().get_legend_handles_labels()
+   by_label = OrderedDict(zip(labels, handles))
+   plt.legend(by_label.values(), by_label.keys())
+   plt.savefig('p2_SSEs')
+   plt.close()
+
 
 #performs the kmeans algorithm
 #returns the partitions as a list of indices for each item in data, the center of mass of each partition, and the SSE at each iteration
@@ -49,7 +77,10 @@ def kmeans(data, k=2):
 	 counts[partitions[item]] = counts[partitions[item]] + 1
 	 temp_centers[partitions[item]] = temp_centers[partitions[item]] + data[item]
       for i in xrange(0,k):
-	 temp_centers[i] = temp_centers[i]/counts[i]
+	 if counts[i] == 0:
+	    temp_centers[i] = centers[i]
+	 else:
+	    temp_centers[i] = temp_centers[i]/counts[i]
       centers = temp_centers
       SSEs.append(calculate_SSE_kmeans(data,centers,partitions))
    return partitions, centers, SSEs

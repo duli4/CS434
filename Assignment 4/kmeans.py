@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib as mpl
 mpl.use('Agg')
 import matplotlib.pyplot as plt
+from PIL import Image
 from scipy.misc import toimage
 from collections import OrderedDict
 import random
@@ -15,6 +16,8 @@ def load_data(filename):
 
 def main():
    data = load_data('unsupervised.txt')
+   #for i in xrange(0, len(data)):
+   #   Image.fromarray(np.reshape(data[i],(28,28)).astype('uint8'),mode='L').save('data_'+str(i)+'.png')
    #PART 1: K-means with k = 2
    (partitions, centers, SSEs) = kmeans(data, k=2)
    iterations = [i+1 for i in xrange(0, len(SSEs))]
